@@ -8,95 +8,119 @@ template <typename T>
 class BSTree {
     Node<T> *root;
     size_t nodes;
-    bool der = false;
-    bool izq = false;
 
     public:
         BSTree() : root(nullptr), nodes(0){};
 
-        bool find(T data) {
-            auto temp = root;
-            if(root->data == data){
-                return true;
-            }
-            while (true) {
-                if (data > temp->data) temp = temp->right;
-                else temp = temp->left;
-                if (temp == nullptr){
-                    return false;
-                }
-                if (temp->data == data) {
+        bool findNode(Node<T> *node, T data) {
+            if (node) {
+                if (data == node->data)
                     return true;
+                else if (data < node->data)
+                    return findNode(node->left, data);
+                else if (data > node->data)
+                    return findNode(node->right, data);
+            }
+            return false;
+        }
+
+        void insertNode(Node<T> *node, T data) {
+            if (data > node->data) {
+                if (node->right) insertNode(node->right, data);
+                else{
+                    node->right = new Node<T>();
+                    node->right->data = data;
+                }
+            }
+            else {
+                if (node->left) insertNode(node->left, data);
+                else{
+                    node->left = new Node<T>();
+                    node->left->data = data;
                 }
             }
         }
 
-        void insert(T data) {
-            auto node = new Node<T>;
-            node->data = data;
-            if(root==nullptr){
-                root = node;
+        Node<T> *findMinDataNode(Node<T>* node) {
+        while (node->left) node = node->left;
+        return node;
+        }
+
+        Node<T>* removeNode(Node<T>* node, T data){
+        if (!node) return node;
+        else if (data > node->data) node->right = removeNode(node->right, data);
+        else if (data < node->data) node->left = removeNode(node->left, data);
+        else {
+            if (!node->right) {
+                auto temp = node->left;
+                delete node;
+                return temp;
             }
+            else if (!node->left) {
+                auto temp = node->right;
+                delete node;
+                return temp;
+            }
+            auto minDataNode = findMinDataNode(node->right);
+            node->data = minDataNode->data;
+            node->right = removeNode(node->right, minDataNode->data);
+        }
+        return node;
+    }
+
+        size_t findHeight(Node<T> *node) {
+            if (node) {
+                if (findHeight(node->right) > findHeight(node->left)) return findHeight(node->right) + 1;
+                else return findHeight(node->left) + 1;
+            }
+            return 0;
+        }
+
+        void preOrder(Node<T> *node) {
+            if (node) {
+                cout << node->data << " ";
+                preOrder(node->left);
+                preOrder(node->right);
+            }
+        }
+
+        void inOrder(Node<T> *node) {
+            if (node) {
+                inOrder(node->left);
+                cout << node->data << " ";
+                inOrder(node->right);
+            }
+        }
+
+        void postOrder(Node<T> *node) {
+            if (node) {
+                postOrder(node->left);
+                postOrder(node->right);
+                cout << node->data << " ";
+            }
+        }
+
+        bool find(T data) {
+            return findNode(root, data);
+        }
+
+        void insert(T data) {
+            if (root)
+                insertNode(root, data);
             else{
-                auto temp = root;
-                while(true){
-                    if(node->data > temp->data){
-                        if(temp->right == nullptr){
-                            temp->right = node;
-                            break;
-                        }
-                        else temp = temp->right;
-                    }
-                    else{
-                        if(temp->left == nullptr){
-                            temp->left = node;
-                            break;
-                        }
-                        else temp = temp->left;
-                    }
-                }
+                root = new Node<T>();
+                root->data = data;
             }
             nodes++;
         }
 
-        void deleteNode(Node<T>* node, Node<T>* padre){
-            if(node->right!=nullptr){
-                swap(node->data, node->right->data);
-                deleteNode(node->right, node);
-                der = true;
-                izq = false;
-            }
-            else if (node->left!=nullptr){
-                swap(node->data, node->left->data);
-                deleteNode(node->left, node);
-                der = false;
-                izq = true;
-            }
-
-            delete node;
-            if (der) padre->right = nullptr;
-            if (izq) padre->left = nullptr;
-        }
-
         bool remove(T data) {
-            nodes --;
-            auto temp = root;
-            if(root->data == data){
-                deleteNode(temp, temp);
+            if (find(data) and root) {
+                root = removeNode(root, data);
+                --nodes;
                 return true;
             }
-            while (true) {
-                if (data > temp->data) temp = temp->right;
-                else temp = temp->left;
-
-                if(temp == nullptr){
-                    return false;
-                }
-                if (temp->data == data) {
-                    deleteNode(temp, temp);
-                    return true;
-                }
-            }
+            return false;
         }
 
         size_t size() {
@@ -104,21 +128,22 @@ class BSTree {
         }
 
         size_t height() {
-            unsigned int contador = 0;
-            unsigned int max = 0;
-            auto temp = root;
+            return findHeight(root) > 0 ? findHeight(root) - 1 : 0;
         }
 
         void traversePreOrder() {
-            // TODO
+            preOrder(root);
+            cout << '\n';
         }
 
         void traverseInOrder() {
-            // TODO
+            inOrder(root);
+            cout << '\n';
         }
 
         void traversePostOrder() {
-            // TODO
+            postOrder(root);
+            cout << '\n';
         }
 
         Iterator<T> begin() {
@@ -126,7 +151,11 @@ class BSTree {
         }
 
         Iterator<T> end() {
-            //return Iterator<T> (last);
+            auto last = root;
+            while(last->right){
+                last = last->right;
+            }
+            return Iterator<T> (last->right);
         }
 
         ~BSTree() {
