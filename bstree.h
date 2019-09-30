@@ -12,6 +12,7 @@ class BSTree {
     public:
         BSTree() : root(nullptr), nodes(0){};
 
+        // Deberían ser métodos privados
         bool findNode(Node<T> *node, T data) {
             if (node) {
                 if (data == node->data)
@@ -25,9 +26,11 @@ class BSTree {
         }
 
         void insertNode(Node<T> *node, T data) {
+            // Se puede reducir un poco el código repetido
             if (data > node->data) {
                 if (node->right) insertNode(node->right, data);
                 else{
+                    // Podrías tener un constructor para reducir el código
                     node->right = new Node<T>();
                     node->right->data = data;
                 }
